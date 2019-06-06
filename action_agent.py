@@ -41,12 +41,16 @@ class ActionAgent(object):
         click = detector(self.scr, template)
         self._click(click)
 
+
     def warp_random_belt(self):
         self._refresh_screen()
         self.state_machine.get_objects(self.scr)
-        go_to = [x[2] for x in self.state_machine.objects if x[1][:4] == 'Auve'][0]
-        self._click(go_to)
-        self.warp_zero()
+        try:
+            go_to = [x[2] for x in self.state_machine.objects if x[1][:4] == 'Auve'][0]
+            self._click(go_to)
+            self.warp_zero()
+        except:
+            pass
 
     def warp_zero(self):
         '''
@@ -57,10 +61,13 @@ class ActionAgent(object):
         '''
         pyautogui.keyDown('s')
         pyautogui.keyUp('s')
+        time.sleep(30)
 
     def dock(self):
         pyautogui.keyDown('d')
         pyautogui.keyUp('d')
+        time.sleep(50)
+        self.state_machine.change_state(1)
 
     def aproach(self):
         '''
@@ -83,19 +90,70 @@ class ActionAgent(object):
         pyautogui.keyUp('Ctrl')
 
     def aproach_asteroid(self):
-        self.state_machine.get_objects('Mining')
-        go_to = [x[2] for x in self.state_machine.objects if x[1] == 'Asteroid'][0]
-        self._click(go_to)
-        time.sleep(1)
-        self.target()
-        time.sleep(0.1)
-        self.aproach()
+        self.state_machine.get_objects(overview='Mining')
+        try:
+            go_to = [x[2] for x in self.state_machine.objects if x[1] == 'Asteroid'][0]
+            self._click(go_to)
+            time.sleep(1)
+            self.target()
+            time.sleep(0.3)
+            self.aproach()
+        except:
+            pass
 
     def dock_station(self):
-        self.state_machine.get_objects('General')
-        go_to = [x[2] for x in self.state_machine.objects if x[1] == 'Asteroid'][0]
+        self.state_machine.get_objects(overview='General')
+        go_to = [x[2] for x in self.state_machine.objects][0]
         self._click(go_to)
         time.sleep(1)
         self.dock()
 
+    def undock(self):
+        pyautogui.moveTo(1797, 190)
+        time.sleep(0.1)
+        pyautogui.click(1797, 190)
+        time.sleep(30)
+        pyautogui.moveTo(850, 967)
+        time.sleep(0.1)
+        pyautogui.click(850, 967)
+        time.sleep(0.2)
+        pyautogui.moveTo(924, 980)
+        time.sleep(0.1)
+        pyautogui.click(924, 980)
 
+    def unload(self):
+        pass
+
+    def decision_tree(self):
+        self._refresh_screen()
+
+        if self.state_machine.test_docked(self.scr):
+            if self.state_machine.cargo < 20:
+                self.undock()
+            else:
+                self.unload()
+        else:
+            self.state_machine.check_cargo(self.scr)
+            self.state_machine.read_location(self.scr)
+            if self.state_machine.cargo > 95:
+                self.dock_station()
+            else:
+                if 'Aste' not in self.state_machine.location:
+                    self.warp_random_belt()
+                else:
+                    if self.state_machine.check_target(self.scr):
+                        self.state_machine.check_stripers(self.scr)
+                        if not self.state_machine.stripers[0]:
+                            self.activate_stripers(1)
+                        if not self.state_machine.stripers[1]:
+                            self.activate_stripers(2)
+                    else:
+                        self.aproach_asteroid()
+                        if not self.state_machine.objects:
+                            self.warp_random_belt()
+
+
+    def run(self):
+        while True:
+            self.decision_tree()
+            time.sleep(5)

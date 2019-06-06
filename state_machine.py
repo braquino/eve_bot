@@ -3,7 +3,7 @@ from PIL import Image, ImageGrab
 import numpy as np
 import pyautogui
 import time
-numbers_replaces = {'S': '5', '?': '7'}
+numbers_replaces = {'S': '5', '?': '7', '!': '1'}
 
 class StateMachine(object):
 
@@ -18,10 +18,11 @@ class StateMachine(object):
                             7: 'warping_to_station'}
 
         self.docked = False
+        self.location = None
         self.previous_state = None
         self.state = 0
         self.objects = None
-        self.cargo = None
+        self.cargo = 0
         self.stripers = [False, False]
         get_windows_logo(ImageGrab.grab()).save('img_templates/win_logo.jpg')
 
@@ -31,6 +32,10 @@ class StateMachine(object):
         error = np.mean(test_logo - saved_logo)
         return 1 > error > -1
 
+    def change_state(self, new_state):
+        self.previous_state = self.state
+        self.state = new_state
+
     def test_docked(self, scr):
         return read_screen_neg(scr, (1743, 174, 1837, 196), 180) == 'UNDOCK'
 
@@ -38,10 +43,10 @@ class StateMachine(object):
         pass
 
     def read_location(self, scr):
-        return read_screen_neg(scr, (77, 135, 344, 154), 200)
+        self.location = read_screen_neg(scr, (77, 135, 344, 154), 200)
 
     def get_objects(self, overview, n_obj=5):
-        self.select_overview(overview)
+        self.select_overview(overview=overview)
         time.sleep(0.2)
         scr = ImageGrab.grab()
         obj_area = scr.crop((1673, 185, 1834, 617))
@@ -79,13 +84,17 @@ class StateMachine(object):
         text = read_screen_neg(sc, (coords[0] - 90, coords[1] - 130, coords[0] + 75, coords[1] - 15), 100)
         text = text.replace('%', '')
         idx = text.find('Ore Hold')
-        self.cargo = text[idx + 8:idx + 8 + 6]
+        try:
+            self.cargo = float(text[idx + 8:idx + 8 + 6])
+        except:
+            self.cargo = 0
 
     def select_overview(self, overview):
         if overview == 'General':
             x = 1676
-        elif overview == 'Mining':
+        else:
             x = 1723
+        print(x)
         pyautogui.moveTo(x, 153)
         time.sleep(0.1)
         pyautogui.click(x, 153)
@@ -101,3 +110,7 @@ class StateMachine(object):
         striper2 = im[958, 1130, :].mean() > 90
         self.stripers = [striper1, striper2]
         # TODO: Improve the way it works, avoiding read pixels, maybe reading memory
+
+    def check_target(self, scr):
+        target_text = self.read_targeted(scr)
+        return 'm' in target_text
