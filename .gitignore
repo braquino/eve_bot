@@ -1,0 +1,5 @@
+img_aux
+venv
+__pycache__
+.idea
+test_mouse.py
