@@ -117,10 +117,12 @@ class ActionAgent(object):
             pass
 
     def undock(self):
+        # click undock
         pyautogui.moveTo(1797, 190)
         time.sleep(0.1)
         pyautogui.click(1797, 190)
         time.sleep(30)
+        # click tactical view configuration
         pyautogui.moveTo(850, 967)
         time.sleep(0.1)
         pyautogui.click(850, 967)
