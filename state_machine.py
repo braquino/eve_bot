@@ -1,9 +1,9 @@
-from detector import get_windows_logo, read_screen_neg, detector
+from detector import get_windows_logo, read_screen_neg, detector, multi_detector
 from PIL import Image, ImageGrab
 import numpy as np
 import pyautogui
 import time
-numbers_replaces = {'S': '5', '?': '7', '!': '1'}
+numbers_replaces = {'S': '5', '?': '7', '!': '1', '%': '6'}
 
 class StateMachine(object):
 
@@ -24,6 +24,7 @@ class StateMachine(object):
         self.objects = None
         self.cargo = 0
         self.stripers = [False, False]
+        self.stripers_half  = [False, False]
         get_windows_logo(ImageGrab.grab()).save('img_templates/win_logo.jpg')
 
     def test_out_of_eve(self, scr):
@@ -56,14 +57,22 @@ class StateMachine(object):
         for i in range(n_obj):
             start = i * interval
             temp_list = read_screen_neg(obj_area, (0, start, 430, start + interval), 100).split(' ')[:3]
-            dist, um, obj = temp_list
-            dist = dist.replace('.', '')
+            try:
+                dist, um, obj = temp_list
+            except:
+                dist, um, obj = (500, 'km', (300,300))
+                print('Error getting object')
+
             try:
                 dist = int(dist)
             except:
                 for char in numbers_replaces:
                     dist = dist.replace(char, numbers_replaces[char])
-                dist = int(dist)
+                dist = ''.join([x for x in dist if x in '0123456789'])
+                try:
+                    dist = int(dist)
+                except:
+                    dist = 0
             if um == 'm':
                 dist = dist
             elif um == 'km':
@@ -91,7 +100,7 @@ class StateMachine(object):
 
     def select_overview(self, overview):
         if overview == 'General':
-            x = 1676
+            x = 1768
         else:
             x = 1723
         print(x)
@@ -111,6 +120,17 @@ class StateMachine(object):
         self.stripers = [striper1, striper2]
         # TODO: Improve the way it works, avoiding read pixels, maybe reading memory
 
+    def check_stripers_half(self, scr):
+        im = np.asarray(scr)
+        striper1 = im[911, 1080, :].mean() > 90
+        striper2 = im[911, 1130, :].mean() > 90
+        self.stripers_half = [striper1, striper2]
+        # TODO: Improve the way it works, avoiding read pixels, maybe reading memory
+
     def check_target(self, scr):
-        target_text = self.read_targeted(scr)
-        return 'm' in target_text
+        #### Not working well
+        # target_text = self.read_targeted(scr)
+        # return 'm' in target_text
+        r, g, b = np.asarray(scr)[94, 1764, :]
+        print(r, g, b)
+        return int(r) > (int(g) + int(b))
