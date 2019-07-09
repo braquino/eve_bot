@@ -94,7 +94,7 @@ class ActionAgent(object):
         pyautogui.keyUp('Ctrl')
 
     def aproach_asteroid(self):
-        self.state_machine.get_objects(overview='Mining')
+        self.state_machine.get_objects(overview='Mining', n_obj=10)
         try:
             go_to = [x[2] for x in self.state_machine.objects if x[1] == 'Asteroid'][0]
             self._click(go_to)
