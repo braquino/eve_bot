@@ -2,7 +2,7 @@
 An EVE Online bot in python  
   
 This bot is fully functional, only tested at Auvergne solar system in 1920 x 1080 resolution.  
-It works reading the screen so, configuring it isn't a easy task. You have to get some special points and box from your EVE screen and congifure the methods bellow:  
+It works reading the screen so, configuring it isn't a easy task. You have to get some special points and boxes from your EVE screen and congifure the methods bellow:  
   
 ## state_machine.py  
 Undock button text when inside station
